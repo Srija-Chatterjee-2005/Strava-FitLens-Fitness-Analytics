@@ -1,0 +1,21 @@
+file,rows,exact_duplicates,users,start,end,missing_cells,sha256,sheet_dimension,role
+weightLogInfo_merged.csv,67.0,0.0,8.0,2016-04-12T06:47:11,2016-05-12T23:59:59,65.0,,,
+dailySteps_merged.csv,940.0,0.0,33.0,2016-04-12T00:00:00,2016-05-12T00:00:00,0.0,,,
+dailyActivity_merged.csv,940.0,0.0,33.0,2016-04-12T00:00:00,2016-05-12T00:00:00,0.0,,,
+sleepDay_merged.csv,413.0,3.0,24.0,2016-04-12T00:00:00,2016-05-12T00:00:00,0.0,,,
+dailyIntensities_merged.csv,940.0,0.0,33.0,2016-04-12T00:00:00,2016-05-12T00:00:00,0.0,,,
+hourlySteps_merged.csv,22099.0,0.0,33.0,2016-04-12T00:00:00,2016-05-12T15:00:00,0.0,,,
+minuteIntensitiesWide_merged.csv,21645.0,0.0,33.0,2016-04-13T00:00:00,2016-05-13T08:00:00,0.0,,,
+minuteStepsWide_merged.csv,21645.0,0.0,33.0,2016-04-13T00:00:00,2016-05-13T08:00:00,0.0,,,
+dailyCalories_merged.csv,940.0,0.0,33.0,2016-04-12T00:00:00,2016-05-12T00:00:00,0.0,,,
+minuteSleep_merged.csv,188521.0,543.0,24.0,2016-04-11T20:48:00,2016-05-12T09:56:00,0.0,,,
+hourlyCalories_merged.csv,22099.0,0.0,33.0,2016-04-12T00:00:00,2016-05-12T15:00:00,0.0,,,
+hourlyIntensities_merged.csv,22099.0,0.0,33.0,2016-04-12T00:00:00,2016-05-12T15:00:00,0.0,,,
+minuteCaloriesWide_merged.csv,21645.0,0.0,33.0,2016-04-13T00:00:00,2016-05-13T08:00:00,0.0,,,
+minuteStepsNarrow_merged.csv,1325580.0,0.0,33.0,2016-04-12T00:00:00,2016-05-12T15:59:00,0.0,,,
+minuteIntensitiesNarrow_merged.csv,1325580.0,0.0,33.0,2016-04-12T00:00:00,2016-05-12T15:59:00,0.0,,,
+minuteMETsNarrow_merged.csv,1325580.0,0.0,33.0,2016-04-12T00:00:00,2016-05-12T15:59:00,0.0,,,
+minuteCaloriesNarrow_merged.csv,1325580.0,0.0,33.0,2016-04-12T00:00:00,2016-05-12T15:59:00,0.0,,,
+heartrate_seconds_merged.csv,2483658.0,0.0,14.0,2016-04-12T00:00:00,2016-05-12T16:20:00,0.0,,,
+heartrate_seconds_merged.xlsx,,,,,,,c7740fb0789b3caf0e02d7e29d0eabba93c7dbee993b0b3fadfd899693a42fbc,unknown,Alternate heart-rate spreadsheet export; CSV is canonical to avoid overlap and Excel row limits.
+heartrate_seconds_merged(1).xlsx,,,,,,,fc599e2f49b4ddb029d39116f50a397c36ff691d6255b6905744689672a6f5d6,unknown,Alternate heart-rate spreadsheet export; CSV is canonical to avoid overlap and Excel row limits.

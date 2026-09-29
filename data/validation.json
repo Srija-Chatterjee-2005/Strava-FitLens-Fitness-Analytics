@@ -1,0 +1,29 @@
+[
+  {
+    "check": "dailySteps vs dailyActivity",
+    "mismatched_values": 0,
+    "unmatched_rows": 0
+  },
+  {
+    "check": "dailyCalories vs dailyActivity",
+    "mismatched_values": 0,
+    "unmatched_rows": 0
+  },
+  {
+    "check": "dailyIntensities vs dailyActivity",
+    "mismatched_values": 0,
+    "unmatched_rows": 0
+  },
+  {
+    "check": "Daily merge row count",
+    "result": 940
+  },
+  {
+    "check": "Daily step sum preserved",
+    "result": 7179636
+  },
+  {
+    "check": "Detail dates outside activity base",
+    "result": 24
+  }
+]
