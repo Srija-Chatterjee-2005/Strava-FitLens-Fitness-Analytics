@@ -31,9 +31,14 @@ def execute_sql(sql,d,h,scope='Filtered selection'):
         dd=d.copy();dd['date']=dd.date.dt.strftime('%Y-%m-%d')
         hh=h.copy();hh['date']=hh.date.dt.strftime('%Y-%m-%d')
         dd.to_sql('filtered_daily',c,index=False);hh.to_sql('filtered_hourly',c,index=False)
-        if scope=='Filtered selection':
+        if scope == 'Filtered selection':
             c.execute('CREATE TEMP VIEW daily AS SELECT * FROM filtered_daily')
             c.execute('CREATE TEMP VIEW hourly AS SELECT * FROM filtered_hourly')
+        else:
+            full = enrich(read_table('daily'))
+            full['date'] = full.date.dt.strftime('%Y-%m-%d')
+            full.to_sql('full_daily_enriched', c, index=False)
+            c.execute('CREATE TEMP VIEW daily AS SELECT * FROM full_daily_enriched')
         allowed={sqlite3.SQLITE_SELECT,sqlite3.SQLITE_READ,sqlite3.SQLITE_FUNCTION,sqlite3.SQLITE_RECURSIVE}
         c.set_authorizer(lambda action,*args:sqlite3.SQLITE_OK if action in allowed else sqlite3.SQLITE_DENY)
         start=time.monotonic();c.set_progress_handler(lambda:int(time.monotonic()-start>5),10000)
