@@ -13,21 +13,28 @@ st.set_page_config(page_title='FitLens • Fitness analytics',page_icon='🏃',l
 style()
 @st.cache_data
 def load():
-    a=enrich(read_table('daily'));b=read_table('hourly');b.Id=b.Id.astype(str);b['date']=pd.to_datetime(b.date)
+    a = enrich(read_table('daily'))
+    b = read_table('hourly')
+    b.Id = b.Id.astype(str)
+    b['date'] = pd.to_datetime(b.date)
     return a,b,read_table('source_inventory')
 try:base,hourly,inventory=load()
 except Exception:
     st.error('The project database could not be opened. Extract the entire ZIP first and keep the data folder beside app.py.');st.stop()
 PAGES=['Overview','Activity explorer','Sleep & recovery','Participant studio','Goal tracker','Chart builder','SQL workspace','Data explorer']
 def reset():
-    for k in ['dates','participants','exclude','goal']:st.session_state.pop(k,None)
+    st.session_state['dates'] = (base.date.min().date(), base.date.max().date())
+    st.session_state['participants'] = []
+    st.session_state['exclude'] = False
+    st.session_state['goal'] = 10000
+    st.session_state.pop('query_result', None)
 with st.sidebar:
     st.markdown('<div class="brand"><div class="brand-icon">f.</div><div><div class="brand-name">FitLens</div><div class="brand-sub">MOVE. MEASURE. EXPLORE.</div></div></div>',unsafe_allow_html=True)
     page=st.radio('Workspace',PAGES,label_visibility='collapsed',key='page')
     st.divider()
     st.markdown('**Your selection**')
     dates=st.date_input('Date range',(base.date.min().date(),base.date.max().date()),min_value=base.date.min().date(),max_value=base.date.max().date(),key='dates')
-    chosen=st.multiselect('Participants',sorted(base.Id.unique()),format_func=lambda x:'P'+x[-4:]+' · '+x,key='participants',placeholder='All participants')
+    chosen=st.multiselect('Participants',sorted(base.Id.unique()),format_func=lambda x:'P'+x+' · '+x,key='participants',placeholder='All participants')
     goal=st.slider('Daily step goal',1000,20000,10000,500,key='goal')
     exclude=st.checkbox('Exclude zero-step days',key='exclude')
     st.button('Reset filters',on_click=reset,width='stretch')
@@ -49,7 +56,8 @@ def user_stats(frame):
     rates=frame.assign(hit=frame.TotalSteps.ge(goal)).groupby('Id').hit.mean()*100
     g['goal_pct']=g.Id.map(rates);return g
 
-def explain_scope():st.caption(scope+' • Filters apply to all charts and exports on this page.')
+def explain_scope():     
+    st.caption(scope + ' • Sidebar filters apply to dashboard selections. SQL follows its selected scope. Full-sample datasets and project downloads ignore sidebar filters.')
 
 if page=='Overview':
     title('Your fitness data, in focus.','A clear view of movement, daily habits, and the people behind the numbers.')
@@ -148,7 +156,7 @@ elif page=='Sleep & recovery':
             heading('Weight observations',f'{len(wt)} user-days · {wt.Id.nunique()} participants')
             if wt.empty:empty('No weight records in this selection.')
             else:
-                who=st.selectbox('Participant with weight records',sorted(wt.Id.unique()),format_func=lambda x:'P'+x[-4:])
+                who=st.selectbox('Participant with weight records',sorted(wt.Id.unique()),format_func=lambda x:'P'+x)
                 chart(px.scatter(wt[wt.Id.eq(who)],x='date',y='weight_kg',color_discrete_sequence=[BLUE],labels={'weight_kg':'Weight (kg)','date':''}))
             st.caption('Sparse measurements. Points show observed dates only; no weight-loss claims are inferred.')
 
@@ -156,9 +164,9 @@ elif page=='Participant studio':
     title('Every participant has a pattern.','Explore one profile or compare participants using the same selected period.')
     explain_scope();tab1,tab2=st.tabs(['Individual profile','Compare participants'])
     with tab1:
-        who=st.selectbox('Choose a participant',sorted(d.Id.unique()),format_func=lambda x:'Participant P'+x[-4:]+' · '+x)
+        who=st.selectbox('Choose a participant',sorted(d.Id.unique()),format_func=lambda x:'Participant P'+x+' · '+x)
         u=d[d.Id.eq(who)].sort_values('date');hit=u.TotalSteps.ge(goal)
-        cards([('AVERAGE STEPS',fmt(u.TotalSteps.mean()),f'Participant P{who[-4:]}'),('OBSERVED DAYS',str(len(u)),f'{u.date.min():%d %b} to {u.date.max():%d %b}'),('GOAL SUCCESS',f'{hit.mean()*100:.1f}%',f'{hit.sum()} of {len(u)} observed days'),('LONGEST GOAL STREAK',f'{longest_streak(u,goal)} days','Consecutive calendar days; gaps break a streak')])
+        cards([('AVERAGE STEPS',fmt(u.TotalSteps.mean()),f'Participant P{who}'),('OBSERVED DAYS',str(len(u)),f'{u.date.min():%d %b} to {u.date.max():%d %b}'),('GOAL SUCCESS',f'{hit.mean()*100:.1f}%',f'{hit.sum()} of {len(u)} observed days'),('LONGEST GOAL STREAK',f'{longest_streak(u,goal)} days','Consecutive calendar days; gaps break a streak')])
         l,r=st.columns([2,1])
         with l,st.container(border=True):
             heading('Daily progress')
@@ -171,19 +179,19 @@ elif page=='Participant studio':
         with st.expander('Inspect daily records'):
             st.dataframe(u[['date','TotalSteps','Calories','active_minutes','sleep_hours','hr_mean_bpm']],hide_index=True,width='stretch')
     with tab2:
-        ids=sorted(d.Id.unique());picked=st.multiselect('Compare up to 4 participants',ids,default=ids[:min(3,len(ids))],max_selections=4,format_func=lambda x:'P'+x[-4:])
+        ids=sorted(d.Id.unique());picked=st.multiselect('Compare up to 4 participants',ids,default=ids[:min(3,len(ids))],max_selections=4,format_func=lambda x:'P'+x)
         if not picked:empty('Select at least one participant to compare.')
         else:
             metric=st.selectbox('Comparison measure',list(METRICS),key='compare_metric');column=METRICS[metric]
             sub=d[d.Id.isin(picked)];summary=user_stats(sub)
             with st.container(border=True):
                 heading(metric+' by participant','Mean over each participant’s available records')
-                g=sub.groupby('participant',as_index=False).agg(value=(column,'mean'),records=(column,'count'))
+                g=sub.groupby(['Id','participant'],as_index=False).agg(value=(column,'mean'),records=(column,'count'))
                 chart(px.bar(g,x='participant',y='value',hover_data=['records'],color_discrete_sequence=[RED],labels={'participant':'','value':metric}),285)
             with st.container(border=True):
                 heading('Compare daily patterns','Gaps remain visible')
                 grid=pd.MultiIndex.from_product([picked,pd.date_range(d.date.min(),d.date.max())],names=['Id','date']).to_frame(index=False)
-                t=grid.merge(sub[['Id','date',column]],how='left',on=['Id','date']);t['participant']='P'+t.Id.str[-4:]
+                t=grid.merge(sub[['Id','date',column]],how='left',on=['Id','date']);t['participant']='P'+t.Id.astype(str)
                 chart(px.line(t,x='date',y=column,color='participant',markers=True,color_discrete_sequence=PALETTE,labels={column:metric,'date':''}),310)
             st.dataframe(summary.drop(columns='Id').round(2),hide_index=True,width='stretch')
             st.download_button('↓ Export comparison',csv(summary),'participant_comparison.csv','text/csv')
@@ -251,7 +259,7 @@ elif page=='SQL workspace':
         heading('Query library')
         selected=st.selectbox('Choose an analysis',names)
         sql_scope=st.radio('Query scope',['Filtered selection','Full sample'])
-        st.caption('daily and hourly use this scope. filtered_daily and filtered_hourly always use the sidebar selection. Other source tables retain the full sample.')
+        st.caption('daily and hourly use this scope. filtered_daily and filtered_hourly always use the sidebar selection. Other source tables retain the full sample. Q7 uses a fixed 10,000-step goal; edit its SQL to use a different goal.')
         with st.expander('Available fields'):
             st.code('daily\n'+', '.join(base.columns)+'\n\nhourly\n'+', '.join(hourly.columns),language=None)
         st.download_button('↓ Download SQL examples',(ROOT/'analysis.sql').read_bytes(),'analysis.sql')
@@ -299,7 +307,7 @@ else:
         else:
             export=shown[cols];st.caption(f'{len(export):,} records · {len(cols)} columns');st.dataframe(export,hide_index=True,width='stretch',height=420)
             st.download_button('↓ Download displayed records',csv(export),'fitlens_records.csv','text/csv',type='primary')
-        with st.expander('Project downloads'):
+        with st.expander('Project downloads (full sample; ignores sidebar filters)'):
             for name in ['merged_daily.csv','merged_hourly.csv','all_sources_daily.csv']:
                 st.download_button('↓ '+name,(ROOT/'data'/name).read_bytes(),name,'text/csv')
     with tab2:
