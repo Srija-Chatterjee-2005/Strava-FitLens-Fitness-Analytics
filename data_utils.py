@@ -11,7 +11,8 @@ def read_table(name):
 def enrich(d):
     d=d.copy();d.Id=d.Id.astype(str);d['date']=pd.to_datetime(d.date)
     d['weekday']=d.date.dt.day_name();d['sleep_hours']=d.sleep_minutes/60
-    d['participant']='P'+d.Id.str[-4:];return d
+    d['participant'] = 'P' + d.Id.astype(str)
+    return d
 
 def longest_streak(d,goal):
     best=run=0;previous=None
